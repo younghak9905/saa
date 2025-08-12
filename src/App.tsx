@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import { Upload, RotateCw, Shuffle, Sun, Moon, ArrowLeft, ArrowRight, Check, X, Download, List, Eye, EyeOff, Copy } from "lucide-react";
+import { Upload, RotateCw, Shuffle, Sun, Moon, ArrowLeft, ArrowRight, Check, X, Download, List, Eye, EyeOff, Copy, Save, Cloud } from "lucide-react";
+import { supabase, StudySet } from "./lib/supabase";
 
 // Types
 type QA = { q: string; a: string };
@@ -91,6 +92,9 @@ export default function App() {
   const [dark, setDark] = useState(true);
   const [showList, setShowList] = useState(false);
   const [autoRepeatUnknown, setAutoRepeatUnknown] = useState(true);
+  const [savedSets, setSavedSets] = useState<StudySet[]>([]);
+  const [currentSetTitle, setCurrentSetTitle] = useState("");
+  const [showSavedSets, setShowSavedSets] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // theme
@@ -233,6 +237,58 @@ export default function App() {
     }
   };
 
+  const saveStudySet = async () => {
+    if (!currentSetTitle.trim() || rawRows.length === 0) {
+      alert('제목과 문제를 입력해주세요.');
+      return;
+    }
+    
+    const studySet: StudySet = {
+      title: currentSetTitle,
+      questions: rawRows.map(row => ({
+        question: row.q,
+        answer: row.a
+      }))
+    };
+    
+    const { error } = await supabase
+      .from('study_sets')
+      .insert([studySet]);
+    
+    if (error) {
+      alert('저장 실패: ' + error.message);
+    } else {
+      alert('저장되었습니다!');
+      loadSavedSets();
+    }
+  };
+
+  const loadSavedSets = async () => {
+    const { data, error } = await supabase
+      .from('study_sets')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (!error && data) {
+      setSavedSets(data);
+    }
+  };
+
+  const loadStudySet = (studySet: StudySet) => {
+    const qas = studySet.questions.map(q => ({
+      q: formatText(q.question),
+      a: formatText(q.answer)
+    }));
+    setRawRows(qas);
+    resetSession(qas.length);
+    setCurrentSetTitle(studySet.title);
+    setShowSavedSets(false);
+  };
+
+  useEffect(() => {
+    loadSavedSets();
+  }, []);
+
   const filePicker = () => fileInputRef.current?.click();
 
   const sampleCSV = `question,answer\nHTTP는 무상태(Stateless) 프로토콜이다,true\nAWS에서 객체 스토리지는 무엇인가?,Amazon S3\nTCP 3-way handshake의 단계는?,SYN -> SYN/ACK -> ACK`;
@@ -243,6 +299,9 @@ export default function App() {
         <header className="flex items-center justify-between gap-4 mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">CSV 플래시카드 🎓</h1>
           <div className="flex items-center gap-3">
+            <Button variant="outline" className="gap-2" onClick={() => setShowSavedSets(!showSavedSets)}>
+              <Cloud size={16} /> 저장된 세트
+            </Button>
             <div className="flex items-center gap-2">
               <Sun size={18} />
               <Switch checked={dark} onCheckedChange={setDark} />
@@ -253,6 +312,31 @@ export default function App() {
             </Button>
           </div>
         </header>
+
+        {/* Saved Sets */}
+        {showSavedSets && (
+          <Card className="mb-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">저장된 학습 세트</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-60 overflow-auto">
+                {savedSets.map((set) => (
+                  <div key={set.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <div className="font-medium">{set.title}</div>
+                      <div className="text-sm text-neutral-500">{set.questions.length}개 문제</div>
+                    </div>
+                    <Button size="sm" onClick={() => loadStudySet(set)}>불러오기</Button>
+                  </div>
+                ))}
+                {savedSets.length === 0 && (
+                  <div className="text-center text-neutral-500 py-8">저장된 세트가 없습니다.</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Upload / Dropzone */}
         <Card className="mb-4">
@@ -276,8 +360,20 @@ export default function App() {
             </div>
 
             {rawRows.length > 0 && (
-              <div className="mt-4 grid sm:grid-cols-2 gap-4">
-                <div className="space-y-3">
+              <div className="mt-4 space-y-4">
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="학습 세트 제목" 
+                    value={currentSetTitle} 
+                    onChange={(e) => setCurrentSetTitle(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button onClick={saveStudySet} className="gap-2">
+                    <Save size={16} /> 저장
+                  </Button>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Shuffle size={16} />
@@ -314,6 +410,7 @@ export default function App() {
                     ))}
                     {rawRows.length > 10 && <li className="text-neutral-500">... 나머지 {rawRows.length - 10}개</li>}
                   </ul>
+                  </div>
                 </div>
               </div>
             )}

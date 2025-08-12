@@ -480,16 +480,16 @@ export default function App() {
                           <div className="text-xs text-neutral-500 flex items-center gap-2">
                             <span className="hidden sm:inline">Space 키로 뒤집기</span>
                             <Button 
-                              variant="ghost" 
+                              variant="outline" 
                               size="sm" 
-                              className="h-6 px-2 text-xs gap-1" 
+                              className="h-8 px-3 text-xs gap-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300" 
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 setFlipped(f => !f);
                               }}
                             >
-                              {flipped ? <EyeOff size={12} /> : <Eye size={12} />}
+                              {flipped ? <EyeOff size={14} /> : <Eye size={14} />}
                               {flipped ? '문제 보기' : '정답 보기'}
                             </Button>
                           </div>

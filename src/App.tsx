@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import { Upload, RotateCw, Shuffle, Sun, Moon, ArrowLeft, ArrowRight, Check, X, Download, List, Eye, EyeOff, Copy, Save, Cloud } from "lucide-react";
+import { Upload, RotateCw, Shuffle, Sun, Moon, ArrowLeft, ArrowRight, Check, X, Download, List, Eye, EyeOff, Copy, Save, Cloud, Trash2 } from "lucide-react";
 import { supabase, StudySet } from "./lib/supabase";
 
 // Types
@@ -210,12 +210,13 @@ export default function App() {
   const markUnknown = () => {
     const i = currentIndex; if (i < 0) return;
     if (!unknown.includes(i)) setUnknown(u => [...u, i]);
-    // Put it back later near the end (spaced repetition-lite)
+    // Put it back later with more spacing (spaced repetition-lite)
     if (autoRepeatUnknown) {
       setQueue(q => {
         const copy = [...q];
-        // append this index again in ~5 cards ahead
-        const insertAt = Math.min(copy.length, idx + 5 + Math.floor(Math.random()*3));
+        // append this index again in ~10-15 cards ahead
+        const minGap = Math.max(10, Math.floor(copy.length * 0.3));
+        const insertAt = Math.min(copy.length, idx + minGap + Math.floor(Math.random()*5));
         copy.splice(insertAt, 0, i);
         return copy;
       });
@@ -285,6 +286,21 @@ export default function App() {
     setShowSavedSets(false);
   };
 
+  const deleteStudySet = async (id: string) => {
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+    
+    const { error } = await supabase
+      .from('study_sets')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      alert('삭제 실패: ' + error.message);
+    } else {
+      loadSavedSets();
+    }
+  };
+
   useEffect(() => {
     loadSavedSets();
   }, []);
@@ -327,9 +343,14 @@ export default function App() {
                       <div className="font-medium">{set.title}</div>
                       <div className="text-sm text-neutral-500">{set.questions.length}개 문제</div>
                     </div>
-                    <Button size="sm" onClick={() => loadStudySet(set)}>불러오기</Button>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => loadStudySet(set)}>불러오기</Button>
+                      <Button size="sm" variant="destructive" onClick={() => deleteStudySet(set.id!)}>
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
                   </div>
-                ))}
+                ))
                 {savedSets.length === 0 && (
                   <div className="text-center text-neutral-500 py-8">저장된 세트가 없습니다.</div>
                 )}
@@ -447,13 +468,24 @@ export default function App() {
                         className="rounded-2xl border shadow-sm p-6 bg-white dark:bg-neutral-900 min-h-[220px] flex flex-col justify-between"
                       >
                         <div className="flex justify-between items-center mb-2">
-                          <div className="text-xs text-neutral-500">카드를 눌러 뒤집기 · Space</div>
+                          <div className="text-xs text-neutral-500 flex items-center gap-2">
+                            <span>Space 키로 뒤집기</span>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 px-2 text-xs gap-1" 
+                              onClick={() => setFlipped(f => !f)}
+                            >
+                              {flipped ? <EyeOff size={12} /> : <Eye size={12} />}
+                              {flipped ? '문제 보기' : '정답 보기'}
+                            </Button>
+                          </div>
                           <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={copyOriginalText}>
                             <Copy size={12} /> 원문 복사
                           </Button>
                         </div>
                         <div className="flex-1 flex items-start justify-start text-left">
-                          <div onClick={() => setFlipped(f => !f)} className="cursor-pointer select-none w-full">
+                          <div className="w-full">
                             {!flipped ? (
                               <div>
                                 <div className="text-sm text-neutral-500 mb-2">문제</div>

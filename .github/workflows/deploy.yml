@@ -16,13 +16,15 @@ jobs:
           node-version: '18'
           
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm ci
+          npm install
         
       - name: Build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: npm run build
+        run: npx vite build
         
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

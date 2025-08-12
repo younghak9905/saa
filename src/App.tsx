@@ -18,7 +18,7 @@ function formatText(text: string): string {
   return text.replace(/([A-E]\.)\s*/g, '\n$1 ');
 }
 
-function renderFormattedText(text: string) {
+function renderFormattedText(text: string, onFlip?: () => void) {
   const parts = text.split('\n').filter(part => part.trim());
   return (
     <div className="space-y-2">
@@ -26,15 +26,15 @@ function renderFormattedText(text: string) {
         const match = part.match(/^([A-E]\.)\s*(.*)/);
         if (match) {
           return (
-            <div key={index} className="flex items-start gap-2">
-              <span className="inline-flex items-center justify-center w-8 h-8 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-md text-sm font-medium flex-shrink-0">
+            <div key={index} className="flex items-start gap-2 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg p-2 -m-2 transition-all duration-200 hover:scale-[1.02]" onClick={onFlip}>
+              <span className="inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-md text-xs sm:text-sm font-medium flex-shrink-0 transition-colors duration-200 hover:bg-blue-200 dark:hover:bg-blue-700">
                 {match[1].charAt(0)}
               </span>
-              <span className="flex-1 py-1">{match[2]}</span>
+              <span className="flex-1 py-1 break-words min-w-0">{match[2]}</span>
             </div>
           );
         }
-        return <div key={index} className="mb-3">{part}</div>;
+        return <div key={index} className="mb-3 break-words">{part}</div>;
       })}
     </div>
   );
@@ -312,19 +312,19 @@ export default function App() {
   return (
     <div className="min-h-screen bg-neutral-100 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50 transition-colors">
       <div className="max-w-5xl mx-auto p-4 sm:p-6">
-        <header className="flex items-center justify-between gap-4 mb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">CSV 플래시카드 🎓</h1>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2" onClick={() => setShowSavedSets(!showSavedSets)}>
-              <Cloud size={16} /> 저장된 세트
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">CSV 플래시카드 🎓</h1>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <Button variant="outline" className="gap-2 text-xs sm:text-sm" onClick={() => setShowSavedSets(!showSavedSets)}>
+              <Cloud size={14} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">저장된 세트</span><span className="sm:hidden">저장</span>
             </Button>
             <div className="flex items-center gap-2">
-              <Sun size={18} />
+              <Sun size={16} className="sm:w-[18px] sm:h-[18px]" />
               <Switch checked={dark} onCheckedChange={setDark} />
-              <Moon size={18} />
+              <Moon size={16} className="sm:w-[18px] sm:h-[18px]" />
             </div>
-            <Button variant="outline" className="gap-2" onClick={() => resetSession(rawRows.length)}>
-              <RotateCw size={16} /> 초기화
+            <Button variant="outline" className="gap-2 text-xs sm:text-sm" onClick={() => resetSession(rawRows.length)}>
+              <RotateCw size={14} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">초기화</span><span className="sm:hidden">리셋</span>
             </Button>
           </div>
         </header>
@@ -393,7 +393,7 @@ export default function App() {
                     <Save size={16} /> 저장
                   </Button>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -412,7 +412,7 @@ export default function App() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <EyeOff size={16} />
-                      <Label className="text-sm">Q/A 뒤집기 (답 먼저 보기)</Label>
+                      <Label className="text-sm break-words">Q/A 뒤집기 (답 먼저 보기)</Label>
                     </div>
                     <Switch checked={reverse} onCheckedChange={setReverse} />
                   </div>
@@ -427,7 +427,16 @@ export default function App() {
                   </div>
                   <ul className="space-y-2">
                     {rawRows.slice(0, 10).map((r, i) => (
-                      <li key={i} className="flex gap-2"><span className="text-neutral-500">{i+1}.</span><span className="truncate">{r.q}</span><span className="text-neutral-500">→</span><span className="truncate">{r.a}</span></li>
+                      <li key={i} className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                        <div className="flex items-start gap-2 min-w-0">
+                          <span className="text-neutral-500 flex-shrink-0">{i+1}.</span>
+                          <span className="break-words min-w-0">{r.q}</span>
+                        </div>
+                        <div className="flex items-start gap-2 min-w-0 sm:ml-0 ml-6">
+                          <span className="text-neutral-500 flex-shrink-0">→</span>
+                          <span className="break-words min-w-0 text-neutral-600 dark:text-neutral-400">{r.a}</span>
+                        </div>
+                      </li>
                     ))}
                     {rawRows.length > 10 && <li className="text-neutral-500">... 나머지 {rawRows.length - 10}개</li>}
                   </ul>
@@ -457,7 +466,7 @@ export default function App() {
             <CardContent>
               {started ? (
                 <div className="grid gap-4">
-                  <div className="grid lg:grid-cols-[2fr,300px] gap-4 items-start">
+                  <div className="grid grid-cols-1 xl:grid-cols-[2fr,300px] gap-4 items-start">
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={`${currentIndex}-${flipped}-${reverse}`}
@@ -465,47 +474,63 @@ export default function App() {
                         animate={{ opacity: 1, y: 0, rotateX: 0 }}
                         exit={{ opacity: 0, y: -8, rotateX: -10 }}
                         transition={{ duration: 0.2 }}
-                        className="rounded-2xl border shadow-sm p-6 bg-white dark:bg-neutral-900 min-h-[220px] flex flex-col justify-between"
+                        className="rounded-2xl border shadow-sm p-4 sm:p-6 bg-white dark:bg-neutral-900 min-h-[200px] sm:min-h-[220px] flex flex-col justify-between"
                       >
-                        <div className="flex justify-between items-center mb-2">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
                           <div className="text-xs text-neutral-500 flex items-center gap-2">
-                            <span>Space 키로 뒤집기</span>
+                            <span className="hidden sm:inline">Space 키로 뒤집기</span>
                             <Button 
                               variant="ghost" 
                               size="sm" 
                               className="h-6 px-2 text-xs gap-1" 
-                              onClick={() => setFlipped(f => !f)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setFlipped(f => !f);
+                              }}
                             >
                               {flipped ? <EyeOff size={12} /> : <Eye size={12} />}
                               {flipped ? '문제 보기' : '정답 보기'}
                             </Button>
                           </div>
                           <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={copyOriginalText}>
-                            <Copy size={12} /> 원문 복사
+                            <Copy size={12} /> <span className="hidden sm:inline">원문 복사</span><span className="sm:hidden">복사</span>
                           </Button>
                         </div>
-                        <div className="flex-1 flex items-start justify-start text-left">
-                          <div className="w-full">
+                        <div className="flex-1 flex items-start justify-start text-left overflow-hidden">
+                          <div className="w-full min-w-0">
                             {!flipped ? (
                               <div>
                                 <div className="text-sm text-neutral-500 mb-2">문제</div>
-                                <div className="text-lg sm:text-xl font-semibold">{renderFormattedText(currentCard?.q || '')}</div>
+                                <div className="text-base sm:text-lg lg:text-xl font-semibold break-words">{renderFormattedText(currentCard?.q || '', () => setFlipped(f => !f))}</div>
                               </div>
                             ) : (
                               <div>
                                 <div className="text-sm text-neutral-500 mb-2">정답</div>
-                                <div className="text-lg sm:text-xl font-semibold">{renderFormattedText(currentCard?.a || '')}</div>
+                                <div className="text-base sm:text-lg lg:text-xl font-semibold break-words">{renderFormattedText(currentCard?.a || '', () => setFlipped(f => !f))}</div>
                               </div>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center justify-between gap-2 mt-4">
-                          <Button variant="outline" className="gap-2" onClick={prev} disabled={idx===0}><ArrowLeft size={16}/> 이전(←)</Button>
-                          <div className="flex gap-2">
-                            <Button variant="destructive" className="gap-2" onClick={markUnknown}><X size={16}/> 모르겠음(2)</Button>
-                            <Button variant="default" className="gap-2" onClick={markKnown}><Check size={16}/> 알겠음(1)</Button>
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4">
+                          <Button variant="outline" className="gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto" onClick={prev} disabled={idx===0}>
+                            <ArrowLeft size={14} className="sm:w-4 sm:h-4"/> 
+                            <span className="hidden sm:inline">이전(←)</span><span className="sm:hidden">이전</span>
+                          </Button>
+                          <div className="flex gap-2 w-full sm:w-auto">
+                            <Button variant="destructive" className="gap-1 sm:gap-2 text-xs sm:text-sm flex-1 sm:flex-none" onClick={markUnknown}>
+                              <X size={14} className="sm:w-4 sm:h-4"/> 
+                              <span className="hidden sm:inline">모르겠음(2)</span><span className="sm:hidden">모름</span>
+                            </Button>
+                            <Button variant="default" className="gap-1 sm:gap-2 text-xs sm:text-sm flex-1 sm:flex-none" onClick={markKnown}>
+                              <Check size={14} className="sm:w-4 sm:h-4"/> 
+                              <span className="hidden sm:inline">알겠음(1)</span><span className="sm:hidden">알음</span>
+                            </Button>
                           </div>
-                          <Button variant="outline" className="gap-2" onClick={next} disabled={idx>=queue.length-1}><ArrowRight size={16}/> 다음(→)</Button>
+                          <Button variant="outline" className="gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto" onClick={next} disabled={idx>=queue.length-1}>
+                            <span className="hidden sm:inline">다음(→)</span><span className="sm:hidden">다음</span>
+                            <ArrowRight size={14} className="sm:w-4 sm:h-4"/>
+                          </Button>
                         </div>
                       </motion.div>
                     </AnimatePresence>
@@ -514,16 +539,16 @@ export default function App() {
                     <div className="rounded-2xl border p-4 bg-neutral-50 dark:bg-neutral-900">
                       <div className="font-medium mb-2">단축키</div>
                       <ul className="text-sm space-y-1 text-neutral-600 dark:text-neutral-300">
-                        <li>Space: 카드 뒤집기</li>
+                        <li className="hidden sm:block">Space: 카드 뒤집기</li>
                         <li>1: 알겠음, 2: 모르겠음</li>
-                        <li>← / →: 이전 / 다음</li>
+                        <li className="hidden sm:block">← / →: 이전 / 다음</li>
                       </ul>
                       <div className="h-px bg-neutral-200 dark:bg-neutral-800 my-3"/>
                       <div className="text-sm">
                         <div className="font-medium mb-2">세션 옵션</div>
-                        <div className="flex items-center justify-between mb-2"><span className="text-neutral-500">셔플</span><Switch checked={shuffle} onCheckedChange={(v)=>{setShuffle(v); resetSession(rawRows.length);}}/></div>
-                        <div className="flex items-center justify-between mb-2"><span className="text-neutral-500">모르면 재등장</span><Switch checked={autoRepeatUnknown} onCheckedChange={setAutoRepeatUnknown}/></div>
-                        <div className="flex items-center justify-between"><span className="text-neutral-500">Q/A 뒤집기</span><Switch checked={reverse} onCheckedChange={setReverse}/></div>
+                        <div className="flex items-center justify-between mb-2"><span className="text-neutral-500 text-xs sm:text-sm">셔플</span><Switch checked={shuffle} onCheckedChange={(v)=>{setShuffle(v); resetSession(rawRows.length);}}/></div>
+                        <div className="flex items-center justify-between mb-2"><span className="text-neutral-500 text-xs sm:text-sm">모르면 재등장</span><Switch checked={autoRepeatUnknown} onCheckedChange={setAutoRepeatUnknown}/></div>
+                        <div className="flex items-center justify-between"><span className="text-neutral-500 text-xs sm:text-sm">Q/A 뒤집기</span><Switch checked={reverse} onCheckedChange={setReverse}/></div>
                       </div>
                     </div>
                   </div>
@@ -532,24 +557,26 @@ export default function App() {
                   {showList && (
                     <div className="rounded-2xl border p-4 bg-neutral-50 dark:bg-neutral-900 max-h-[300px] overflow-auto">
                       <div className="font-medium mb-2">전체 목록</div>
-                      <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-neutral-100 dark:bg-neutral-950">
-                          <tr className="text-left text-neutral-500">
-                            <th className="px-2 py-1 w-12">#</th>
-                            <th className="px-2 py-1">문제</th>
-                            <th className="px-2 py-1">정답</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {queue.map((ri, i) => (
-                            <tr key={i} className={`border-t border-neutral-200 dark:border-neutral-800 ${i===idx?"bg-amber-50 dark:bg-amber-900/20": ""}`}>
-                              <td className="px-2 py-1">{i+1}</td>
-                              <td className="px-2 py-1 truncate">{rawRows[ri]?.q}</td>
-                              <td className="px-2 py-1 truncate text-neutral-500">{rawRows[ri]?.a}</td>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm min-w-[500px]">
+                          <thead className="sticky top-0 bg-neutral-100 dark:bg-neutral-950">
+                            <tr className="text-left text-neutral-500">
+                              <th className="px-2 py-1 w-12">#</th>
+                              <th className="px-2 py-1 min-w-[200px]">문제</th>
+                              <th className="px-2 py-1 min-w-[200px]">정답</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {queue.map((ri, i) => (
+                              <tr key={i} className={`border-t border-neutral-200 dark:border-neutral-800 ${i===idx?"bg-amber-50 dark:bg-amber-900/20": ""}`}>
+                                <td className="px-2 py-1">{i+1}</td>
+                                <td className="px-2 py-1 break-words max-w-[250px]">{rawRows[ri]?.q}</td>
+                                <td className="px-2 py-1 break-words max-w-[250px] text-neutral-500">{rawRows[ri]?.a}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   )}
                 </div>

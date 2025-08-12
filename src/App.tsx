@@ -350,7 +350,7 @@ export default function App() {
                       </Button>
                     </div>
                   </div>
-                ))
+                ))}
                 {savedSets.length === 0 && (
                   <div className="text-center text-neutral-500 py-8">저장된 세트가 없습니다.</div>
                 )}
